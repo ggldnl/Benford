@@ -68,10 +68,11 @@ results_root = os.path.join(root_dir, 'results')
 
 # numeric system bases
 #base_list = [10, 20, 40, 60]
-base_list = [10, 20, 40, 60]
+base_list = [10]
 
 # bins
-coeff_list = list(range(9))
+#coeff_list = list(range(9))
+coeff_list = [9]
 
 # compression quality 
 #compression_list = ['jpeg_80', 'jpeg_85', 'jpeg_90', 'jpeg_95', 'jpeg_100']
