@@ -26,7 +26,7 @@ dataset_FaceForensics_label = {'FaceForensics_gan_jpg': 72} # last celebHQ label
 
 # StyleGAN2 (gan)
 StyleGAN2_root = '/content/gdrive/MyDrive/VisionPE/data/StyleGAN2_jpg'
-dataset_StyleGAN2_dict  = dict((f'StyleGAN2_gan_{i}_jpg', os.path.join(images1024x1024_root, f'{i * 1000:0>5d}_jpg')) for i in range(100))
+dataset_StyleGAN2_dict  = dict((f'StyleGAN2_gan_{i}_jpg', os.path.join(StyleGAN2_root, f'{i * 1000:0>6d}_jpg')) for i in range(100))
 dataset_StyleGAN2_ext   = dict((f'StyleGAN2_gan_{i}_jpg', 'jpg') for i in range(100)) # 100 folders
 dataset_StyleGAN2_label = dict((f'StyleGAN2_gan_{i - 73}_jpg', i) for i in range(73, 174))
 
