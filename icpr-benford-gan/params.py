@@ -10,25 +10,25 @@ images1024x1024_root = '/content/gdrive/MyDrive/VisionPE/data/images1024x1024_jp
 # all the dataset generated will be named 'images1024x1024_orig_x_jpg'
 dataset_images1024x1024_dict =  dict((f'images1024x1024_orig_{i}_jpg', os.path.join(images1024x1024_root, f'{i * 1000:0>5d}_jpg')) for i in range(70))
 dataset_images1024x1024_ext =   dict((f'images1024x1024_orig_{i}_jpg', 'jpg') for i in range(70))
-dataset_images1024x1024_label = dict((f'images1024x1024_orig_{i}_jpg', i) for i in range(70))
+#dataset_images1024x1024_label = dict((f'images1024x1024_orig_{i}_jpg', i) for i in range(70))
 
 # celebHQ dataset (original)
-celebAHQ_root = '/content/gdrive/MyDrive/VisionPE/data/celebAHQ/images1024x1024'
-dataset_celebAHQ_dict  = {'celebAHQ_orig': celebAHQ_root}
-dataset_celebAHQ_ext   = {'celebAHQ_orig': 'jpg'}
-dataset_celebAHQ_label = {'celebAHQ_orig': 71} # last images1024x1024 label + 1
+celebAHQ_root = '/content/gdrive/MyDrive/VisionPE/data/celebAHQ/'
+dataset_celebAHQ_dict =  dict((f'celebAHQ_orig_{i}', os.path.join(celebAHQ_root, f'{i * 1000:0>6d}_jpg')) for i in range(30))
+dataset_celebAHQ_ext =   dict((f'celebAHQ_orig_{i}', 'jpg') for i in range(30))
+#dataset_celebAHQ_label = dict((f'celebAHQ_orig_{i}', i) for i in range(71, 101))
 
 # FaceForensics (gan)
 FaceForensics_root = '/content/gdrive/MyDrive/VisionPE/data/FaceForensics_Images_jpg/images_jpg'
 dataset_FaceForensics_dict  = {'FaceForensics_gan_jpg': FaceForensics_root}
 dataset_FaceForensics_ext   = {'FaceForensics_gan_jpg': 'jpg'}
-dataset_FaceForensics_label = {'FaceForensics_gan_jpg': 72} # last celebHQ label + 1
+#dataset_FaceForensics_label = {'FaceForensics_gan_jpg': 101} # last celebHQ label + 1
 
 # StyleGAN2 (gan)
 StyleGAN2_root = '/content/gdrive/MyDrive/VisionPE/data/StyleGAN2_jpg'
 dataset_StyleGAN2_dict  = dict((f'StyleGAN2_gan_{i}_jpg', os.path.join(StyleGAN2_root, f'{i * 1000:0>6d}_jpg')) for i in range(100))
 dataset_StyleGAN2_ext   = dict((f'StyleGAN2_gan_{i}_jpg', 'jpg') for i in range(100)) # 100 folders
-dataset_StyleGAN2_label = dict((f'StyleGAN2_gan_{i - 73}_jpg', i) for i in range(73, 174))
+#dataset_StyleGAN2_label = dict((f'StyleGAN2_gan_{i - 102}_jpg', i) for i in range(102, 203))
 
 
 # putting all dictionaries together
@@ -47,12 +47,18 @@ dataset_StyleGAN2_label = dict((f'StyleGAN2_gan_{i - 73}_jpg', i) for i in range
 
 roots  = [dataset_images1024x1024_dict, dataset_celebAHQ_dict, dataset_StyleGAN2_dict, dataset_FaceForensics_dict]
 exts   = [dataset_images1024x1024_ext, dataset_celebAHQ_ext, dataset_StyleGAN2_ext, dataset_FaceForensics_ext]
-labels = [dataset_images1024x1024_label, dataset_celebAHQ_label, dataset_StyleGAN2_label, dataset_FaceForensics_label]
+#labels = [dataset_images1024x1024_label, dataset_celebAHQ_label, dataset_StyleGAN2_label, dataset_FaceForensics_label]
 
 dataset_root = {k: v for d in roots for k,v in d.items()}
 dataset_ext = {k: v for d in exts for k,v in d.items()}
-dataset_label = {k: v for d in labels for k,v in d.items()}
+#dataset_label = {k: v for d in labels for k,v in d.items()}
 
+dataset_label = {k: i for i, k in enumerate(dataset_root.keys())}
+
+# some datasets (images1024x1024, StyleGAN2, ...) are split into various folders.
+# In order to check if a dataset is correctly seen, we only need one image
+# from one of the many subfolders. Store che true root folder:
+dataset_common_root = [images1024x1024_root, celebAHQ_root, FaceForensics_root, StyleGAN2_root]
 
 # other parameters
 

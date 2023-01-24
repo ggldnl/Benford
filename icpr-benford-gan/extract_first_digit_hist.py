@@ -25,6 +25,13 @@ zig_zag_idx = np.asarray([0, 1, 5, 6, 14, 15, 27, 28, 2, 4, 7, 13, 16, 26, 29, 4
 
 
 def extract_features_from_dct(img_path):
+
+    # returns an array of size (xmax * ymax, b, b)
+    # basically xmax * ymax elements 
+    # each element is a 8x8 matrix
+    # each 8x8 matrix is a block
+    # the array contains all the blocks of the given image
+
     # Params
     b = 8
     # Block-wise 2D-DCT (Luma only)
@@ -37,7 +44,7 @@ def extract_features_from_dct(img_path):
             block = img.getblock(x, y, 0)
             blocks_dct[cnt, :, :] = np.frombuffer(block, dtype=np.int16).reshape((8, 8))
             cnt += 1
-    return blocks_dct
+    return blocks_dct 
 
 
 def compute_histograms(img: np.ndarray, base: int, n_freq: int = 9):
@@ -45,7 +52,7 @@ def compute_histograms(img: np.ndarray, base: int, n_freq: int = 9):
     for k in range(n_freq):
         try:
             h, _ = np.histogram(img[:, k], range=(np.nanmin(img[:, k]), np.nanmax(img[:, k])),
-                                bins=np.arange(0.5, base + 0.5, 1), density=True)
+                                bins=np.arange(0.5, base + 0.5, 1), density=True) # stupid
         except ValueError:
             h = np.zeros(base - 1, dtype=np.float64)
         h_img += [h]
@@ -64,6 +71,27 @@ def first_digit_call(args: dict):
     jpeg_recompression = args['jpeg_recompression']
     recompression_qf = args['recompression_qf']
 
+    """
+    from PIL import Image
+    img = Image.open(path).convert('L')
+    
+    If you have a P mode image, that means it is palettised. 
+    That means there is a palette with up to 256 different colours in it, 
+    and instead of storing 3 bytes for R, G and B for each pixel, 
+    you store 1 byte which is the index into the palette. This confers 
+    both advantages and disadvantages. The advantage is that your image 
+    requires 1/3 of the space in memory and on disk. The disadvantage 
+    is that it can only represent 256 unique colours - so you may get 
+    banding or artefacts.
+
+    If you have an L mode image, that means it is a single channel image 
+    - normally interpreted as greyscale. The L means that is just stores 
+    the Luminance. It is very compact, but only stores a greyscale, not colour.
+    """
+
+    # the conversion should be done only if the extension is not jpg
+    """
+
     # load image
     if path.split('.')[-1] == 'webp':
         img = Image.fromarray(cv2.imread(path))
@@ -78,6 +106,7 @@ def first_digit_call(args: dict):
         img.save(buffer, 'JPEG', quality=qf)
         img = Image.open(buffer).convert('L')
 
+
     # DCT extraction
     tmp_name = uuid.uuid4().hex + '.jpg'
     # taken from http://discourse.techart.online/t/pil-wait-for-image-save/3994/9
@@ -86,15 +115,58 @@ def first_digit_call(args: dict):
         tmp_file.flush()
         os.fsync(tmp_file)
 
-    img_dct = extract_features_from_dct(os.path.join(tmp_path, tmp_name))
+    """
+
+    ext = path.split('.')[-1]
+
+    if ext == 'webp':
+        img = Image.fromarray(cv2.imread(path))
+    else:
+        img = Image.open(path).convert('L')
+
+    # JPEG recompression
+    if jpeg_recompression:
+        buffer = io.BytesIO()
+        np.random.seed(int.from_bytes(os.urandom(4), byteorder='little'))  # needed for real multiprocessing randomness
+        qf = np.random.randint(low=85, high=101) if recompression_qf is None else recompression_qf
+        img.save(buffer, 'JPEG', quality=qf)
+        img = Image.open(buffer).convert('L')
+
+    if ext != 'jpg':
+
+        new_name = uuid.uuid4().hex + '.jpg'
+        new_path = os.path.join(tmp_path, new_name) 
+        
+        # taken from http://discourse.techart.online/t/pil-wait-for-image-save/3994/9
+        with open(new_path, 'wb') as image_jpg:
+            img.save(image_jpg, 'JPEG', quality=jpeg_qf)
+            image_jpg.flush()
+            os.fsync(image_jpg)
+
+        path = new_path
+
+    # extract dct from the image
+    img_dct = extract_features_from_dct(path)
+
+    # img_dct -> array containing all the 8x8 blocks in which we split the image 
 
     # vectorize and remove DC
-    img_dct = img_dct.reshape(-1, 64)
-    img_dct = img_dct[:, 1:]
+    img_dct = img_dct.reshape(-1, 64) # reshape the blocks to have size (1x64)
+
+    # img_dct should have one element for each block, as before, and each element 
+    # should be a 64-element array instread of a 8x8 2d matrix
+
+    # remove the first element, only god knows why
+    img_dct = img_dct[:, 1:] 
+    
+    # img_dct should have n blocks each with 63 dct coefficients in a row
 
     # actually compute first digit vector
     fd = first_digit_gen(img_dct, base)
 
+    # we should have n rows, each with 10 columns
+    # each column should contain the frequency of the index + 1 as first digit
+    
     # reordering in zig zag order
     fd = fd[:, zig_zag_idx[1:] - 1]
 
@@ -173,6 +245,25 @@ def main():
                                                                                                  jpeg_qf,
                                                                                                  len(args_list)))
 
+                """
+
+                first_digit_call:
+                    JPEG recompression if jpeg_recompression flag is True
+                    
+                    DCT extraction 
+                        extract_features_from_dct -> returns the dct for each 8x8 block
+
+                    vectorize and remove DC
+                    
+                    actually compute first digit vector
+                        first_digit_gen
+
+                    reordering in zig zag order (?)
+
+                    computing histograms
+                        compute_histograms
+
+                """
                 ff = p.map(first_digit_call, args_list)
                 ff = np.asarray(ff)
 
