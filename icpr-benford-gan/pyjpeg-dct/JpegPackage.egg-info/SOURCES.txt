@@ -1,8 +1,0 @@
-README.md
-jpeg.c
-jpegmodule.c
-setup.py
-JpegPackage.egg-info/PKG-INFO
-JpegPackage.egg-info/SOURCES.txt
-JpegPackage.egg-info/dependency_links.txt
-JpegPackage.egg-info/top_level.txt
